@@ -62,12 +62,3 @@ func GenerateRefreshToken() (raw, hashed string, err error) {
 func VerifyRefreshToken(raw, hashed string) bool {
 	return bcrypt.CompareHashAndPassword([]byte(hashed), []byte(raw)) == nil
 }
-
-func HashPassword(pw string) (string, error) {
-	b, err := bcrypt.GenerateFromPassword([]byte(pw), bcrypt.DefaultCost)
-	return string(b), err
-}
-
-func CheckPassword(pw, hash string) bool {
-	return bcrypt.CompareHashAndPassword([]byte(hash), []byte(pw)) == nil
-}

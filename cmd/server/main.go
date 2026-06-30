@@ -44,10 +44,8 @@ func main() {
 	mux := http.NewServeMux()
 
 	// Auth
-	mux.HandleFunc("POST /auth/register", authH.Register)
-	mux.HandleFunc("POST /auth/login",    authH.Login)
-	mux.HandleFunc("POST /auth/apple",    authH.Apple)
-	mux.HandleFunc("POST /auth/refresh",  authH.Refresh)
+	mux.HandleFunc("POST /auth/apple",   authH.Apple)
+	mux.HandleFunc("POST /auth/refresh", authH.Refresh)
 
 	// Protected helpers
 	secret := authH.Secret()

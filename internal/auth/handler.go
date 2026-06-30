@@ -24,59 +24,6 @@ func NewHandler(db *pgxpool.Pool) *Handler {
 
 func (h *Handler) Secret() string { return h.secret }
 
-// POST /auth/register
-func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
-	var body struct {
-		Email    string `json:"email"`
-		Password string `json:"password"`
-		Username string `json:"username"`
-	}
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		jsonErr(w, "bad request", http.StatusBadRequest)
-		return
-	}
-	hash, err := HashPassword(body.Password)
-	if err != nil {
-		jsonErr(w, "internal error", http.StatusInternalServerError)
-		return
-	}
-	var userID string
-	err = h.db.QueryRow(r.Context(),
-		`INSERT INTO users (email, username, password_hash) VALUES ($1,$2,$3) RETURNING id`,
-		body.Email, body.Username, hash,
-	).Scan(&userID)
-	if err != nil {
-		jsonErr(w, "email or username already taken", http.StatusConflict)
-		return
-	}
-	h.issueSession(w, r, userID, body.Username, body.Email, "")
-}
-
-// POST /auth/login
-func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
-	var body struct {
-		Email    string `json:"email"`
-		Password string `json:"password"`
-	}
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		jsonErr(w, "bad request", http.StatusBadRequest)
-		return
-	}
-	var (
-		userID, username, subStatus string
-		passwordHash                string
-		email                       string
-	)
-	err := h.db.QueryRow(r.Context(),
-		`SELECT id, username, email, password_hash, sub_status FROM users WHERE email=$1`, body.Email,
-	).Scan(&userID, &username, &email, &passwordHash, &subStatus)
-	if err != nil || !CheckPassword(body.Password, passwordHash) {
-		jsonErr(w, "invalid credentials", http.StatusUnauthorized)
-		return
-	}
-	h.issueSession(w, r, userID, username, email, subStatus)
-}
-
 // POST /auth/apple
 func (h *Handler) Apple(w http.ResponseWriter, r *http.Request) {
 	var body struct {
